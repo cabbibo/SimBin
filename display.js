@@ -1,18 +1,20 @@
 //On Window Object
 const PhysicsRenderer     = require( './lib/PhysicsRenderer' );
 const THREE               = require( './lib/three.min.js' );
+const glslify             = require( 'glslify' );
 
 module.exports = Display
 
-const frag = `
- 
+const frag = glslify( `
+
 uniform sampler2D t_oPos;
 uniform sampler2D t_pos;
 
 uniform vec2  resolution;
 
 uniform float dT;
-uniform vec3 centerPos;
+
+
 
 void main(){
 
@@ -22,11 +24,10 @@ void main(){
 
   vec3 vel = pos.xyz - oPos.xyz;
 
-  vec3 force = vec3( 0. );
+  vec3 force = vec3( 0. , .0 , 0. );
 
-  vec3 dif = pos.xyz - centerPos;
 
-  force -= length( dif ) * length( dif ) * normalize( dif ) * .01;
+  //force += noise( pos.xyz  * .01)* .01;
 
 
   vel += force * dT;
@@ -37,9 +38,8 @@ void main(){
   gl_FragColor = vec4( p , 1. );
 
 
-}
+}` , { inline: true }); 
 
-`
 
 const renderVert = `
 
@@ -76,9 +76,11 @@ void main(){
 
 const renderFrag = `
 
+varying vec3 vVel;
+
 void main(){
 
-  gl_FragColor = vec4( 1. );
+  gl_FragColor = vec4( normalize( vVel ) * .5 + .5  , 1. );
 
 }
 
@@ -88,9 +90,12 @@ function Display(canvas) {
  
   if (!(this instanceof Display)) return new Display(canvas)
 
- 
+
+
 
   this.SIZE = 128;
+
+  this.resetSize = .1;
 
   this.simulationUniforms = {
   
@@ -132,10 +137,10 @@ Display.prototype.init =  function( canvas ){
 
   var ar = canvas.width / canvas.height;
 
-  this.camera = new THREE.PerspectiveCamera( 75, ar , 1, 1000 );
-  this.camera.position.z = 10;
+  this.camera = new THREE.PerspectiveCamera( 75, ar , .01, 10 );
+  this.camera.position.z = 1;
 
-  this.radius = 10;
+  this.radius = 1;
 
   this.renderer = new THREE.WebGLRenderer({
     canvas: canvas 
@@ -151,11 +156,7 @@ Display.prototype.init =  function( canvas ){
   this.clock = new THREE.Clock();
 
   this.createSimulation( frag );
-
  
-  console.log( this.renderUniforms  );
-  console.log( this.simulation );
-  
  
 }
 
@@ -187,18 +188,18 @@ Display.prototype.createSimulation = function( simShader ){
   this.simulation.addBoundTexture( this.renderUniforms.t_oPos   , 'oOutput'   );
   this.simulation.addBoundTexture( this.renderUniforms.t_ooPos  , 'ooOutput'  );
 
-  this.simulation.resetRand( 5 );
+  this.simulation.resetRand( this.resetSize );
 
 }
 
 Display.prototype.createParticles = function( fragShader ){
 
-  this.fragShader = fragShader;
 
+
+  this.fragShader = fragShader;
 
   if( this.particles ){ this.scene.remove( this.particles ); }
 
-  console.log( this.fragShader );
    var mat = new THREE.ShaderMaterial({
     uniforms:       this.renderUniforms,
     vertexShader:   renderVert,
@@ -301,5 +302,13 @@ Display.prototype.updateRender = function( source ) {
  
   this.fragShader = source; 
   this.createParticles( source );
+
+}
+
+Display.prototype.reset = function( size ){
+
+  this.resetSize = size;
+
+  this.simulation.resetRand( size );
 
 }

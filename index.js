@@ -16,7 +16,7 @@ if (sourceId[0] === 's') {
     init(body.shader)
   })
 } else {
-  init(examples.gravity.trim())
+  init(examples.curl.trim())
 }
 
 function init(source) {
@@ -42,11 +42,11 @@ function init(source) {
     e.stopPropagation()
   }, false)
 
-  document.querySelector('.buttons .full').addEventListener('click', e => {
+/*  document.querySelector('.buttons .full').addEventListener('click', e => {
     toggleFullscreen()
     e.preventDefault()
     e.stopPropagation()
-  })
+  })*/
 
   document.querySelector('.buttons .auto').addEventListener('click', e => {
     editor.instant = !editor.instant
@@ -80,6 +80,7 @@ function init(source) {
   var egSelector = document.querySelector('[name="examples"]')
   var szSelector = document.querySelector('[name="scale"]')
   var fsSelector = document.querySelector('[name="fragShader"]')
+  var rsSelector = document.querySelector('[name="resetSize"]')
   
   var examples = require('./examples')
 
@@ -93,13 +94,19 @@ function init(source) {
   szSelector.addEventListener('change', e => {
     var value = Number(szSelector.value)
     if (!value) return
-    display.updateSize( szSelector.value ); 
+    display.updateSize( value ); 
   })
 
-  console.log('FAFS');
-  console.log( fsSelector );
   fsSelector.addEventListener('change', e => {
     var value = fragShaders[fsSelector.value].trim()
     display.createParticles( value ); 
   })
+
+  rsSelector.addEventListener('change', e => {
+    var value = Number(rsSelector.value);
+    if (!value) return
+    
+    display.reset( value ); 
+  })
+
 }
