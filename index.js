@@ -19,11 +19,15 @@ if (sourceId[0] === 's') {
 }
 
 function init(source) {
+  
   var editor = require('./editor')(document.body, source)
 
   var canvas = document.querySelector('canvas')
-  var display = require('./display')(canvas)
   var fitter  = fit(canvas)
+  
+  toggleFullscreen();
+  
+  var display = require('./display')(canvas)
 
   window.addEventListener('resize', debounce(fitter), false)
 
@@ -65,6 +69,7 @@ function init(source) {
   })
 
   editor.on('fullscreen', toggleFullscreen)
+  
   function toggleFullscreen() {
     document.body.classList.toggle('fullscreen')
     fitter(canvas)

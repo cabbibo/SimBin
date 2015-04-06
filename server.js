@@ -77,11 +77,11 @@ function update() {
   bundler.bundle(function(err, src) {
     console.timeEnd('built bundle.js')
 
-    src = uglify.minify('' + src, {
+    /*src = uglify.minify('' + src, {
       fromString: true,
       compress: true,
       mangle: true
-    }).code
+    }).code*/
 
     if (err) {
       console.error(err.message)
