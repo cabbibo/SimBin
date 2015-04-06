@@ -1,4 +1,5 @@
-var examples = require('./examples')
+var examples    = require('./examples')
+var fragShaders = require('./fragShaders')
 var debounce = require('frame-debounce')
 var fit      = require('canvas-fit')
 var xhr      = require('xhr')
@@ -15,7 +16,7 @@ if (sourceId[0] === 's') {
     init(body.shader)
   })
 } else {
-  init(examples.blob.trim())
+  init(examples.gravity.trim())
 }
 
 function init(source) {
@@ -78,6 +79,8 @@ function init(source) {
 
   var egSelector = document.querySelector('[name="examples"]')
   var szSelector = document.querySelector('[name="scale"]')
+  var fsSelector = document.querySelector('[name="fragShader"]')
+  
   var examples = require('./examples')
 
   egSelector.addEventListener('change', e => {
@@ -90,7 +93,13 @@ function init(source) {
   szSelector.addEventListener('change', e => {
     var value = Number(szSelector.value)
     if (!value) return
-    fitter.scale = value
-    fitter()
+    display.updateSize( szSelector.value ); 
+  })
+
+  console.log('FAFS');
+  console.log( fsSelector );
+  fsSelector.addEventListener('change', e => {
+    var value = fragShaders[fsSelector.value].trim()
+    display.createParticles( value ); 
   })
 }

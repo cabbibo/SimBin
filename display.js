@@ -1,7 +1,6 @@
 //On Window Object
 const PhysicsRenderer     = require( './lib/PhysicsRenderer' );
 const THREE               = require( './lib/three.min.js' );
-const TrackballControls   = require( './lib/TrackballControls.js' );
 
 module.exports = Display
 
@@ -45,10 +44,25 @@ void main(){
 const renderVert = `
 
 uniform sampler2D t_pos;
+uniform sampler2D t_oPos;
+uniform sampler2D t_ooPos;
+
+varying vec3 vPos;
+varying vec3 vVel;
+varying vec3 vAcc;
 
 void main(){
 
   vec4 pos = texture2D( t_pos , position.xy );
+  vec4 oPos = texture2D( t_oPos , position.xy );
+  vec4 ooPos = texture2D( t_ooPos , position.xy );
+
+  vec3 vel = pos.xyz - oPos.xyz;
+  vec3 oVel = oPos.xyz - ooPos.xyz;
+
+  vPos = pos.xyz;
+  vVel = vel;
+  vAcc = vel - oVel;
 
   vec3 dif = cameraPosition - pos.xyz;
   
@@ -81,16 +95,20 @@ function Display(canvas) {
   this.simulationUniforms = {
   
     dT:{ type:"f" , value: 0 },
+    time:{ type:"f" , value: 0 },
     centerPos: { type:"v3" , value: new THREE.Vector3( 0 ) }
   }
 
   this.renderUniforms = {
 
-    t_pos:{ type:"t" , value: null }
+    t_pos:    { type:"t" , value: null },
+    t_oPos:   { type:"t" , value: null },
+    t_ooPos:  { type:"t" , value: null }
 
   }
   
   
+  this.fragShader = renderFrag; 
   this.init( canvas );
   this.animate();
 
@@ -115,7 +133,9 @@ Display.prototype.init =  function( canvas ){
   var ar = canvas.width / canvas.height;
 
   this.camera = new THREE.PerspectiveCamera( 75, ar , 1, 1000 );
-  this.camera.position.z = 100;
+  this.camera.position.z = 10;
+
+  this.radius = 10;
 
   this.renderer = new THREE.WebGLRenderer({
     canvas: canvas 
@@ -128,18 +148,20 @@ Display.prototype.init =  function( canvas ){
  // document.body.appendChild( this.renderer.domElement );
 
 
-  this.controls = new THREE.TrackballControls( this.camera );
   this.clock = new THREE.Clock();
 
-  this.createSimulation( this.SIZE , frag );
+  this.createSimulation( frag );
 
+ 
+  console.log( this.renderUniforms  );
+  console.log( this.simulation );
+  
  
 }
 
 
-Display.prototype.createSimulation = function( size , simShader ){
+Display.prototype.createSimulation = function( simShader ){
 
-  this.SIZE = size;
 
   if( this.particles ){ this.scene.remove( this.particles ); }
 
@@ -147,22 +169,47 @@ Display.prototype.createSimulation = function( size , simShader ){
 
   this.simulation = new PhysicsRenderer( this.SIZE , simShader , this.renderer );
   
-  var geo = this.createLookupGeometry( this.SIZE );
+  this.geo = this.createLookupGeometry( this.SIZE );
 
   var mat = new THREE.ShaderMaterial({
     uniforms:       this.renderUniforms,
     vertexShader:   renderVert,
-    fragmentShader: renderFrag,
+    fragmentShader: this.fragShader,
   });
 
   this.simulation.setUniforms( this.simulationUniforms );
 
-  this.particles = new THREE.PointCloud( geo , mat );
+  this.particles = new THREE.PointCloud( this.geo , mat );
+  this.particles.frustumCulled = false;
+  this.scene.add( this.particles );
+  
+  this.simulation.addBoundTexture( this.renderUniforms.t_pos    , 'output'    );
+  this.simulation.addBoundTexture( this.renderUniforms.t_oPos   , 'oOutput'   );
+  this.simulation.addBoundTexture( this.renderUniforms.t_ooPos  , 'ooOutput'  );
+
+  this.simulation.resetRand( 5 );
+
+}
+
+Display.prototype.createParticles = function( fragShader ){
+
+  this.fragShader = fragShader;
+
+
+  if( this.particles ){ this.scene.remove( this.particles ); }
+
+  console.log( this.fragShader );
+   var mat = new THREE.ShaderMaterial({
+    uniforms:       this.renderUniforms,
+    vertexShader:   renderVert,
+    fragmentShader: this.fragShader,
+  });
+
+
+  this.particles = new THREE.PointCloud( this.geo , mat );
   this.particles.frustumCulled = false;
   this.scene.add( this.particles );
 
-  this.simulation.addBoundTexture( this.renderUniforms.t_pos , 'output' );
-  this.simulation.resetRand( 5 );
 
 }
 
@@ -170,14 +217,23 @@ Display.prototype.createSimulation = function( size , simShader ){
 Display.prototype.animate = function(){
 
     requestAnimationFrame( this.animate.bind( this ) );
- 
-    this.simulationUniforms.dT.value = this.clock.getDelta();
+
+    var su = this.simulationUniforms
+    su.dT.value = this.clock.getDelta();
+    su.time.value += su.dT.value;
+
+
+    var t = su.time.value * .1;
+
+    this.camera.position.x = this.radius * Math.cos( t );
+    this.camera.position.z = this.radius * Math.sin( t );
+
+    this.camera.lookAt( su.centerPos.value );
+
     this.simulation.update();
 
-    this.controls.update();
 
     this.checkResize();
-//    this.renderer.setSize( window.innerWidth , window.innerHeight - 48 );
     this.renderer.render( this.scene , this.camera );
 
 
@@ -228,7 +284,22 @@ Display.prototype.resize = function(){
 
 Display.prototype.update = function(source) {
 
-  console.log('UPDARTED');
+  this.simShader = source
+  this.createSimulation( this.simShader );
   //this.shader.update(vert, source)
+
+}
+
+Display.prototype.updateSize = function( size ) {
+  
+  this.SIZE = size;
+  this.createSimulation( this.simShader );
+
+}
+
+Display.prototype.updateRender = function( source ) {
+ 
+  this.fragShader = source; 
+  this.createParticles( source );
 
 }

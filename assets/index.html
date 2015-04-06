@@ -3,11 +3,12 @@
   <head>
     <title>glslb.in</title>
     <link rel="stylesheet" href="/index.css">
+    <!--<link href='http://fonts.googleapis.com/css?family=Roboto:400,300,100,500,700,900' rel='stylesheet' type='text/css'>-->
   </head>
   <body>
     <header>
       <h1>
-        <a href="/"><span class="lang">GLSL</span>bin</a>
+        <a href="/"><span class="lang">Sim</span>bin</a>
       </h1>
       <ul class="buttons">
         <li title="Update Shader (Cmd+Enter / Ctrl+Enter)" class="play"></li>
@@ -15,18 +16,23 @@
         <li title="Toggle Instant Mode (Cmd+; / Ctrl+;)" class="auto"></li>
         <li title="Save Shader (Cmd+S / Ctrl+S)" class="save"></li>
         <select name="scale">
-          <option value="2.00" selected>Scale: 2</option>
-          <option value="1.00" selected>Scale: 1</option>
-          <option value="0.50">Scale: 0.5</option>
-          <option value="0.25">Scale: 0.25</option>
+          <option value="16" > 16 </option>
+          <option value="32"> 32 </option>
+          <option value="64"> 64 </option>
+          <option value="128" selected> 128 </option>
+          <option value="256"> 256 </option>
+        </select>
+        <select name="fragShader">
+          <option value="" > -- Fragment Shaders -- </option>
+          <option value="positionNormal"> pos normal </option>
+          <option value="velocityNormal"> vel normal </option>
+          <option value="accelerationNormal"> acc normal </option>
+          <option value="basic"> basic </option>
         </select>
         <select name="examples">
-          <option value="">-- Examples --</option>
-          <option value="noise">Simplex Noise</option>
-          <option value="sphere">Raytraced Sphere</option>
-          <option value="blob">Raytraced Blob</option>
-          <option value="basicLighting">Raytraced Lighting (Basic)</option>
-          <option value="advancedLighting">Raytraced Lighting (Advanced)</option>
+          <option value="">-- EXAMPLES --</option>
+          <option value="gravity">gravity</option>
+          <option value="simplex">simplex</option>
         </select>
       </ul>
     </header>
@@ -36,27 +42,7 @@
           <canvas id="canvas"></canvas>
         </div>
       </div>
-      <article>
-        <p>
-          glslbin is a fragment shader sandbox similar to
-          <a href="http://shadertoy.com" target="_blank">ShaderToy</a> or
-          <a href="http://glslsandbox.com/" target="_blank">GLSL Sandbox</a>.
-          It's still a work in progress, so expect more to come soon.
-        </p>
-        <p>
-          It adds support for
-          <a href="http://github.com/stackgl/glslify" target="_blank">glslify</a>,
-          a GLSL module system which allows you to easily pull in shared code
-          snippets from <a href="http://npmjs.com/" target="_blank">npm</a>.
-        </p>
-        <p>
-          These modules are all hosted as part of the
-          <a href="http://stack.gl" target="_blank">stack.gl</a> project:
-          you can find a full list of packages in the "Shader Components"
-          section <a href="http://stack.gl/packages" target="_blank">here</a>.
-          Enjoy!
-        </p>
-      </article>
+     
     </main>
     <script charset="utf-8" src="/bundle.js"></script>
     <script>
